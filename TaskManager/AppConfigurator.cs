@@ -39,10 +39,10 @@ namespace TaskManager
                     return Results.Problem(detail: "User not informed.", statusCode: 400);
 
                 if (string.IsNullOrEmpty(registerUser.Email))
-                    return Results.Problem(detail: "Invalid email.", statusCode: 400);
+                    return Results.Problem(detail: "Email cannot be null or empty.", statusCode: 400);
 
-                if (string.IsNullOrEmpty(registerUser.Password) || registerUser.Password.Length < 6)
-                    return Results.Problem(detail: "Invalid password.", statusCode: 400);
+                if (string.IsNullOrEmpty(registerUser.Password))
+                    return Results.Problem(detail: "Password cannot be null or empty.", statusCode: 400);
 
                 if (registerUser.Password != registerUser.ConfirmPassword)
                     return Results.Problem(detail: "Passwords are not matching.", statusCode: 400);
@@ -84,6 +84,12 @@ namespace TaskManager
                 if (loginUser == null)
                     return Results.Problem(detail: "Login not informed.", statusCode: 400);
 
+                if (string.IsNullOrEmpty(loginUser.Email))
+                    return Results.Problem(detail: "Email cannot be null or empty.", statusCode: 400);
+
+                if (string.IsNullOrEmpty(loginUser.Password))
+                    return Results.Problem(detail: "Password cannot be null or empty.", statusCode: 400);
+
                 SignInResult signInResult = await signInManager.PasswordSignInAsync(loginUser.Email, loginUser.Password, false, true);
 
                 if (signInResult.IsLockedOut)
@@ -102,8 +108,8 @@ namespace TaskManager
 
                 return Results.Ok(jwt);
             })
-            .ProducesValidationProblem()
             .Produces<UserResponse>(200)
+            .Produces(400)
             .Produces(500)
             .AllowAnonymous()
             .WithName("Auth")
@@ -159,7 +165,7 @@ namespace TaskManager
                     return Results.Problem(detail: "Request body cannot be null.", statusCode: 400);
 
                 if (string.IsNullOrEmpty(request.Title))
-                    return Results.Problem(detail: $"Property {nameof(request.Title)} cannot be null or empty.", statusCode: 400);
+                    return Results.Problem(detail: "Title cannot be null or empty.", statusCode: 400);
 
                 var newTask = new PersonalTask
                 {
@@ -171,7 +177,7 @@ namespace TaskManager
                     IsAvailable = true
                 };
 
-                efContext.Add(newTask);
+                efContext.PersonalTasks.Add(newTask);
                 
                 int numberOfEntries = await efContext.SaveChangesAsync();
 
@@ -180,8 +186,8 @@ namespace TaskManager
 
                 return Results.CreatedAtRoute("GetTaskById", new { newTask.Id }, PersonalTaskDto.Create(newTask));
             })
-            .ProducesValidationProblem()
             .Produces<PersonalTaskDto>(201)
+            .Produces(400)
             .Produces(500)
             .RequireAuthorization()
             .WithName("AddNewTask")
@@ -193,7 +199,7 @@ namespace TaskManager
                     return Results.Problem(detail: "Request body cannot be null.", statusCode: 400);
 
                 if (string.IsNullOrEmpty(dto.Title))
-                    return Results.Problem(detail: $"Property {nameof(dto.Title)} cannot be null or empty.", statusCode: 400);
+                    return Results.Problem(detail: "Title cannot be null or empty.", statusCode: 400);
 
                 PersonalTask? task = await efContext.PersonalTasks.FirstOrDefaultAsync(t => t.Id == id);
 
@@ -216,8 +222,8 @@ namespace TaskManager
 
                 return Results.NoContent();
             })
-            .ProducesValidationProblem()
             .Produces(204)
+            .Produces(400)
             .Produces(404)
             .Produces(500)
             .RequireAuthorization()
